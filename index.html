@@ -3,15 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Endless rünner - Shop Edition</title>
+    <title>Endless rünner - Stable Build</title>
     <style>
-        /* CSS STYLES */
+        /* --- CSS STYLES --- */
+        :root {
+            --bg-color: #1a1a2e;
+            --ui-font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --accent-color: #e94560;
+        }
+
         body {
             margin: 0;
             padding: 0;
-            background-color: #1a1a2e;
+            background-color: var(--bg-color);
             color: white;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: var(--ui-font);
             overflow: hidden;
             touch-action: none;
             display: flex;
@@ -21,11 +27,12 @@
             width: 100vw;
         }
 
-        #game-container {
+        /* Container to hold Canvas and UI */
+        #game-wrapper {
             position: relative;
             width: 100%;
             height: 100%;
-            max-width: 600px;
+            max-width: 600px; 
             background: #16213e;
             box-shadow: 0 0 50px rgba(0,0,0,0.5);
         }
@@ -36,14 +43,14 @@
             height: 100%;
         }
 
-        /* UI OVERLAY */
+        /* UI LAYER */
         .ui-layer {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none;
+            pointer-events: none; /* Pass clicks through to canvas */
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -57,193 +64,148 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: auto;
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
             padding: 15px 20px;
             box-sizing: border-box;
             pointer-events: none;
         }
 
-        .hud-stat {
-            font-size: 1.2rem;
-            font-weight: bold;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-            margin-bottom: 5px;
-        }
+        .hud-group { display: flex; flex-direction: column; gap: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+        .coin-text { color: #ffd700; font-weight: bold; }
+        .score-text { color: white; font-weight: bold; font-size: 1.2rem; }
 
-        .coin-display { color: #ffd700; }
-
-        /* MENUS */
-        .menu-content {
-            background: rgba(26, 26, 46, 0.95);
-            border: 2px solid #e94560;
-            border-radius: 16px;
-            padding: 20px;
-            width: 85%;
-            max-width: 400px;
-            text-align: center;
-            pointer-events: auto;
-            backdrop-filter: blur(5px);
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        h1 { margin: 0 0 10px 0; color: #e94560; text-transform: uppercase; letter-spacing: 2px; }
-        .subtitle { color: #ccc; font-size: 0.9rem; margin-bottom: 15px; }
-
-        /* BUTTONS */
-        .btn-stack { display: flex; flex-direction: column; gap: 10px; margin: 15px 0; }
-
-        button {
-            border: none;
-            padding: 12px;
-            font-size: 1rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            border-radius: 8px;
-            cursor: pointer;
-            color: white;
-            transition: transform 0.1s;
-        }
-        button:hover { transform: scale(1.03); filter: brightness(1.1); }
-        button:active { transform: scale(0.98); }
-
-        .btn-easy { background: #2ecc71; }
-        .btn-normal { background: #3498db; }
-        .btn-hard { background: #e74c3c; }
-        .btn-shop { background: #9b59b6; }
-        .btn-back { background: #34495e; margin-top: 10px; }
-
-        /* SHOP ITEMS */
-        .shop-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .shop-item {
-            background: rgba(255,255,255,0.05);
-            border: 2px solid transparent;
-            border-radius: 8px;
-            padding: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-            position: relative;
-        }
-
-        .shop-item:hover { background: rgba(255,255,255,0.1); }
-
-        .shop-item.selected { border-color: #2ecc71; background: rgba(46, 204, 113, 0.1); }
-        .shop-item.locked { opacity: 0.6; }
-
-        .color-preview {
-            width: 30px;
-            height: 30px;
-            margin: 0 auto 5px;
-            border-radius: 4px;
-            box-shadow: 0 0 10px currentColor;
-        }
-
-        .price-tag {
-            font-size: 0.8rem;
-            color: #ffd700;
-            font-weight: bold;
-        }
-
-        .owned-tag {
-            font-size: 0.8rem;
-            color: #2ecc71;
-            font-weight: bold;
-        }
-
-        /* UTILS */
-        .hidden { display: none !important; }
+        /* BADGES */
         .hud-badge {
-            display: none; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 4px; font-size: 0.9rem;
-            animation: pulse 0.5s infinite alternate;
+            display: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            background: rgba(0,0,0,0.6);
+            animation: pulse 1s infinite alternate;
         }
         @keyframes pulse { from { opacity: 0.6; } to { opacity: 1; } }
+
+        /* MENUS */
+        .menu-box {
+            background: rgba(26, 26, 46, 0.95);
+            border: 2px solid var(--accent-color);
+            border-radius: 12px;
+            padding: 25px;
+            width: 85%;
+            max-width: 380px;
+            text-align: center;
+            pointer-events: auto; /* Catch clicks */
+            backdrop-filter: blur(5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        h1 { margin: 0 0 5px 0; color: var(--accent-color); text-transform: uppercase; letter-spacing: 2px; }
+        .subtitle { color: #aaa; font-size: 0.9rem; margin-bottom: 15px; }
+        .new-record { color: #e74c3c; font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; display: none; }
+
+        /* BUTTONS */
+        .btn-stack { display: flex; flex-direction: column; gap: 8px; margin: 15px 0; }
+        button {
+            border: none; padding: 12px; font-size: 1rem; font-weight: bold;
+            text-transform: uppercase; border-radius: 6px; cursor: pointer;
+            color: white; transition: 0.1s;
+        }
+        button:hover { transform: scale(1.02); filter: brightness(1.1); }
+        button:active { transform: scale(0.98); }
+        .btn-easy { background: #2ecc71; } .btn-normal { background: #3498db; } .btn-hard { background: #e74c3c; }
+        .btn-shop { background: #9b59b6; width: 100%; } .btn-back { background: #34495e; }
+
+        /* SHOP */
+        .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
+        .shop-item {
+            background: rgba(255,255,255,0.05); border: 1px solid transparent; border-radius: 6px;
+            padding: 10px; cursor: pointer; transition: 0.2s;
+        }
+        .shop-item.selected { border-color: #2ecc71; background: rgba(46, 204, 113, 0.1); }
+        .shop-item.locked { opacity: 0.5; }
+        .color-preview { width: 25px; height: 25px; margin: 0 auto 5px; border-radius: 3px; box-shadow: 0 0 5px currentColor; }
+        .price-tag { color: #ffd700; font-size: 0.8rem; font-weight: bold; }
+        .owned-tag { color: #2ecc71; font-size: 0.8rem; font-weight: bold; }
+
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div id="game-container">
+    <div id="game-wrapper">
         <canvas id="gameCanvas"></canvas>
 
         <!-- HUD -->
         <div id="ui-hud" class="hud hidden">
-            <div>
-                <div class="hud-stat" id="score-display">Score: 0</div>
-                <div class="hud-stat coin-display">Coins: <span id="coin-display-hud">0</span></div>
+            <div class="hud-group">
+                <div id="score-display" class="score-text">Score: 0</div>
+                <div id="coin-display-hud" class="coin-text">Coins: 0</div>
             </div>
-            <div>
+            <div class="hud-group" style="align-items: flex-end;">
                 <div id="badge-slow" class="hud-badge" style="color:#00ffcc; border:1px solid #00ffcc;">SLOW!</div>
-                <div id="badge-mult" class="hud-badge" style="color:#e74c3c; border:1px solid #e74c3c;">COIN x2!</div>
+                <div id="badge-mult" class="hud-badge" style="color:#e74c3c; border:1px solid #e74c3c;">COIN x2</div>
             </div>
         </div>
 
         <!-- MENU LAYER -->
-        <div id="ui-menu" class="ui-layer">
-
+        <div id="ui-layer" class="ui-layer">
+            
             <!-- START SCREEN -->
-            <div id="start-screen" class="menu-content">
+            <div id="start-screen" class="menu-box">
                 <h1>Endless rünner</h1>
-                <div class="subtitle">Dodge. Collect. Customize.</div>
-                <div class="subtitle" style="color:#ffd700">Coins: <span id="coin-display-menu">0</span></div>
+                <div class="subtitle">Dodge. Collect. Shop.</div>
+                <div class="subtitle highscore-text">High Score: <span id="highscore-menu">0</span></div>
 
                 <div class="btn-stack">
-                    <button class="btn-easy" onclick="game.start('easy')">Easy</button>
-                    <button class="btn-normal" onclick="game.start('normal')">Normal</button>
-                    <button class="btn-hard" onclick="game.start('hard')">Hard</button>
+                    <button class="btn-easy" onclick="game.startGame('easy')">Easy</button>
+                    <button class="btn-normal" onclick="game.startGame('normal')">Normal</button>
+                    <button class="btn-hard" onclick="game.startGame('hard')">Hard</button>
                 </div>
 
-                <button class="btn-shop" onclick="ui.openShop()">Color Shop</button>
-
-                <p style="font-size:0.8rem; color:#888; margin-top:15px;">
-                    ⌨️ Arrows/A-D to Move<br>
-                    📱 Tap Left/Right Sides
+                <button class="btn-shop" onclick="ui.showScreen('shop')">Color Shop</button>
+                
+                <p style="font-size:0.8rem; color:#666; margin-top:15px;">
+                    ⌨️ Arrows / A-D  &nbsp;|&nbsp;  📱 Tap Sides
                 </p>
             </div>
 
             <!-- SHOP SCREEN -->
-            <div id="shop-screen" class="menu-content hidden">
-                <h1>Color Shop</h1>
-                <div class="subtitle">Current Coins: <span id="coin-display-shop" style="color:#ffd700">0</span></div>
-
-                <div class="shop-grid" id="shop-grid">
-                    <!-- Items injected via JS -->
-                </div>
-
-                <button class="btn-back" onclick="ui.openMenu()">Back</button>
+            <div id="shop-screen" class="menu-box hidden">
+                <h1>Shop</h1>
+                <div class="subtitle">Coins: <span id="coin-display-shop" style="color:#ffd700">0</span></div>
+                <div class="shop-grid" id="shop-grid"></div>
+                <button class="btn-back" onclick="ui.showScreen('start')">Back</button>
             </div>
 
             <!-- GAME OVER SCREEN -->
-            <div id="game-over-screen" class="menu-content hidden">
+            <div id="game-over-screen" class="menu-box hidden">
                 <h1>Game Over</h1>
-                <div class="subtitle">Final Score: <span id="final-score-val">0</span></div>
-                <div class="subtitle">Coins Collected: <span id="session-coins" style="color:#ffd700">0</span></div>
-
+                <div id="new-record" class="new-record">NEW HIGH SCORE!</div>
+                <div class="subtitle">Score: <span id="final-score-val" style="color:white; font-weight:bold;">0</span></div>
+                <div class="subtitle">Coins: <span id="session-coins" style="color:#ffd700">+0</span></div>
+                <div class="subtitle highscore-text">High Score: <span id="highscore-gameover">0</span></div>
+                
                 <div class="btn-stack">
-                    <button class="btn-normal" onclick="game.restart()">Try Again</button>
-                    <button class="btn-back" onclick="game.returnToMenu()">Menu</button>
+                    <button class="btn-normal" onclick="game.startGame('restart')">Try Again</button>
+                    <button class="btn-back" onclick="ui.showScreen('start')">Menu</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- --- JAVASCRIPT LOGIC --- -->
     <script>
         /**
-         * CONFIG & DATA
+         * 1. CONFIGURATION & DATA
          */
         const CONFIG = {
             playerSpeed: 400,
             baseEnemySpeed: 250,
             spawnRate: 800,
             difficultyStep: 0.05,
-            powerUpDuration: 5000, // Slightly longer for coin earning
+            powerUpDuration: 5000,
             slowFactor: 0.4
         };
 
@@ -253,7 +215,6 @@
             hard:   { speedMod: 1.6, spawnMod: 0.6, scoreMod: 2.0, coinMod: 1.5 }
         };
 
-        // EXPANDED COLOR PALETTE
         const COLORS = [
             { id: 'cyan', name: 'Neon Cyan', hex: '#00f0ff', price: 0 },
             { id: 'green', name: 'Matrix Green', hex: '#00ff00', price: 100 },
@@ -265,19 +226,12 @@
             { id: 'red', name: 'Blood Red', hex: '#ff0000', price: 2000 }
         ];
 
-        // --- ENGINE SETUP ---
+        // Canvas Setup
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        let canvasRect = { left: 0, top: 0, width: 0, height: 0 };
 
-        function resize() {
-            canvas.width = document.getElementById('game-container').offsetWidth;
-            canvas.height = document.getElementById('game-container').offsetHeight;
-            game.player.w = canvas.width * 0.06;
-            game.player.h = game.player.w;
-        }
-        window.addEventListener('resize', resize);
-
-        // --- SAVE DATA ---
+        // Save Data
         let saveData = JSON.parse(localStorage.getItem('endlessRunnerSave')) || {
             coins: 0,
             highScore: 0,
@@ -285,124 +239,177 @@
             selectedColor: 'cyan'
         };
 
-        // --- GAME LOGIC ---
+        /**
+         * 2. GAME OBJECT (The Logic Core)
+         */
         const game = {
             state: 'START', // START, PLAYING, GAMEOVER
+            paused: false,
+            
             score: 0,
             sessionCoins: 0,
             currentDifficulty: DIFFICULTY.normal,
             lastDifficultyKey: 'normal',
-
-            player: { x: 0, y: 0, w: 30, h: 30, color: COLORS[0].hex },
+            
+            player: { x: 0, y: 0, w: 0, h: 0, color: '#00f0ff' },
             enemies: [],
-            coins: [],
+            coins: [], 
             powerUps: [], // 0: Slow, 1: Coin x2
-            texts: [], // Floating text
-
+            floatingTexts: [],
+            
             lastTime: 0,
             spawnTimer: 0,
-            coinSpawnTimer: 0,
             currentSpeed: 0,
-
+            
             isSlowed: false,
-            isCoinMult: false, // New state
+            isCoinMult: false,
             timerSlow: 0,
             timerMult: 0,
 
-            keys: { ArrowLeft: false, ArrowRight: false, a: false, d: false },
-            touch: { active: false, x: 0 },
+            inputs: { left: false, right: false },
 
             init: function() {
-                resize();
-
-                const savedColor = COLORS.find(c => c.id === saveData.selectedColor);
-                this.player.color = savedColor ? savedColor.hex : COLORS[0].hex;
+                this.resize();
+                // Load Color
+                const cObj = COLORS.find(c => c.id === saveData.selectedColor);
+                this.player.color = cObj ? cObj.hex : COLORS[0].hex;
 
                 ui.updateMoney();
+                ui.updateHighScore();
 
-                window.addEventListener('keydown', e => this.keys[e.key] = true);
-                window.addEventListener('keyup', e => this.keys[e.key] = false);
+                // Keyboard Events
+                window.addEventListener('keydown', e => {
+                    if (e.key === 'ArrowLeft' || e.key === 'a') this.inputs.left = true;
+                    if (e.key === 'ArrowRight' || e.key === 'd') this.inputs.right = true;
+                });
+                window.addEventListener('keyup', e => {
+                    if (e.key === 'ArrowLeft' || e.key === 'a') this.inputs.left = false;
+                    if (e.key === 'ArrowRight' || e.key === 'd') this.inputs.right = false;
+                });
 
-                canvas.addEventListener('touchstart', e => { e.preventDefault(); this.touch.active = true; this.touch.x = e.touches[0].clientX; }, {passive: false});
-                canvas.addEventListener('touchmove', e => { e.preventDefault(); if(this.touch.active) this.touch.x = e.touches[0].clientX; }, {passive: false});
-                canvas.addEventListener('touchend', e => { e.preventDefault(); this.touch.active = false; }, {passive: false});
+                // Touch Events (Corrected with getBoundingClientRect)
+                const handleTouch = (x) => {
+                    const rect = canvas.getBoundingClientRect();
+                    const touchX = x - rect.left;
+                    if (touchX < rect.width / 2) {
+                        this.inputs.left = true; this.inputs.right = false;
+                    } else {
+                        this.inputs.left = false; this.inputs.right = true;
+                    }
+                };
 
+                canvas.addEventListener('touchstart', e => {
+                    e.preventDefault();
+                    handleTouch(e.touches[0].clientX);
+                }, {passive: false});
+
+                canvas.addEventListener('touchmove', e => {
+                    e.preventDefault();
+                    handleTouch(e.touches[0].clientX);
+                }, {passive: false});
+
+                canvas.addEventListener('touchend', e => {
+                    e.preventDefault();
+                    this.inputs.left = false; this.inputs.right = false;
+                });
+
+                // Pause Listeners
+                const pauseGame = () => { if (this.state === 'PLAYING') this.paused = true; };
+                document.addEventListener('visibilitychange', () => { if(document.hidden) pauseGame(); });
+                window.addEventListener('blur', pauseGame);
+
+                // Start Loop
                 requestAnimationFrame(t => this.loop(t));
             },
 
-            start: function(difficulty) {
+            resize: function() {
+                const wrapper = document.getElementById('game-wrapper');
+                canvas.width = wrapper.offsetWidth;
+                canvas.height = wrapper.offsetHeight;
+                canvasRect = canvas.getBoundingClientRect();
+                // Player size is 6% of canvas width
+                this.player.w = canvas.width * 0.06;
+                this.player.h = this.player.w;
+            },
+
+            startGame: function(difficulty) {
+                if (difficulty === 'restart') difficulty = this.lastDifficultyKey;
+                
+                this.state = 'PLAYING';
+                this.paused = false;
                 this.currentDifficulty = DIFFICULTY[difficulty];
                 this.lastDifficultyKey = difficulty;
-
+                
                 this.score = 0;
                 this.sessionCoins = 0;
                 this.enemies = [];
                 this.coins = [];
                 this.powerUps = [];
-                this.texts = [];
+                this.floatingTexts = [];
+                
                 this.currentSpeed = CONFIG.baseEnemySpeed;
                 this.spawnTimer = 0;
-                this.coinSpawnTimer = 0;
                 this.isSlowed = false;
                 this.isCoinMult = false;
                 this.timerSlow = 0;
                 this.timerMult = 0;
 
+                // Reset Player Pos
                 this.player.y = canvas.height - this.player.h - 20;
                 this.player.x = canvas.width / 2 - this.player.w / 2;
 
-                this.state = 'PLAYING';
-                ui.updateState();
-            },
-
-            restart: function() {
-                this.start(this.lastDifficultyKey);
-            },
-
-            returnToMenu: function() {
-                this.state = 'START';
-                ui.updateState();
+                ui.showScreen('hud');
             },
 
             gameOver: function() {
                 this.state = 'GAMEOVER';
-
+                
+                // Check High Score
+                let isNew = false;
                 if (this.score > saveData.highScore) {
                     saveData.highScore = Math.floor(this.score);
+                    isNew = true;
                 }
+
+                // Save Data
                 saveData.coins += this.sessionCoins;
-
                 localStorage.setItem('endlessRunnerSave', JSON.stringify(saveData));
+                
+                // Update UI
                 ui.updateMoney();
-
+                ui.updateHighScore();
                 document.getElementById('final-score-val').innerText = Math.floor(this.score);
                 document.getElementById('session-coins').innerText = `+${this.sessionCoins}`;
+                const recMsg = document.getElementById('new-record');
+                recMsg.style.display = isNew ? 'block' : 'none';
 
-                this.updateUI();
-                ui.updateState();
-                this.draw();
+                ui.showScreen('gameover');
             },
 
             update: function(dt) {
-                if (this.state !== 'PLAYING') return;
+                if (this.paused || this.state !== 'PLAYING') return;
 
-                // 1. Movement
-                let move = 0;
-                if (this.keys.ArrowLeft || this.keys.a) move = -1;
-                if (this.keys.ArrowRight || this.keys.d) move = 1;
-                if (this.touch.active) {
-                    const centerX = window.innerWidth / 2;
-                    if (this.touch.x < centerX) move = -1; else move = 1;
-                }
+                // 1. Move Player
+                let speed = CONFIG.playerSpeed * (canvas.width / 500); // Scale speed to width
+                if (this.inputs.left) this.player.x -= speed * dt;
+                if (this.inputs.right) this.player.x += speed * dt;
 
-                this.player.x += move * (CONFIG.playerSpeed * (canvas.width/500)) * dt;
+                // Boundaries
                 if (this.player.x < 0) this.player.x = 0;
                 if (this.player.x + this.player.w > canvas.width) this.player.x = canvas.width - this.player.w;
 
-                // 2. Difficulty
+                // 2. Difficulty & Timers
                 this.currentSpeed += CONFIG.difficultyStep * dt * 10;
-                if (this.isSlowed) { this.timerSlow -= dt * 1000; if(this.timerSlow <= 0) this.isSlowed = false; }
-                if (this.isCoinMult) { this.timerMult -= dt * 1000; if(this.timerMult <= 0) this.isCoinMult = false; }
+                
+                if (this.isSlowed) {
+                    this.timerSlow -= dt * 1000;
+                    if (this.timerSlow <= 0) this.isSlowed = false;
+                }
+                if (this.isCoinMult) {
+                    this.timerMult -= dt * 1000;
+                    if (this.timerMult <= 0) this.isCoinMult = false;
+                }
+
                 let actualSpeed = this.isSlowed ? this.currentSpeed * CONFIG.slowFactor : this.currentSpeed;
 
                 // 3. Spawn Enemies
@@ -410,266 +417,309 @@
                 this.spawnTimer -= dt * 1000;
                 if (this.spawnTimer <= 0) {
                     let size = this.player.w + (Math.random() * 20);
-                    this.enemies.push({ x: Math.random() * (canvas.width - size), y: -size, w: size, h: size });
+                    this.enemies.push({
+                        x: Math.random() * (canvas.width - size),
+                        y: -size, w: size, h: size
+                    });
                     this.spawnTimer = rate * (0.8 + Math.random() * 0.4);
                 }
 
                 // 4. Spawn Coins
                 if (Math.random() < 0.02) {
-                    this.coins.push({
-                        x: Math.random() * (canvas.width - 20),
-                        y: -20, w: 20, h: 20
-                    });
+                    this.coins.push({ x: Math.random() * (canvas.width - 20), y: -20, w: 20, h: 20 });
                 }
 
-                // 5. Update Enemies
+                // 5. Spawn Powerups
+                if (Math.random() < 0.005) {
+                    let type = Math.random() > 0.5 ? 0 : 1;
+                    this.powerUps.push({ x: Math.random() * (canvas.width - 25), y: -25, w: 25, h: 25, type: type });
+                }
+
+                // 6. Update Entities
+                this.updateEnemies(dt, actualSpeed);
+                this.updateCoins(dt, actualSpeed);
+                this.updatePowerUps(dt, actualSpeed);
+                this.updateFloatingTexts(dt);
+
+                // 7. Score UI
+                ui.updateHUD(this.score, saveData.coins + this.sessionCoins, this.isSlowed, this.isCoinMult);
+            },
+
+            updateEnemies: function(dt, speed) {
                 for (let i = this.enemies.length - 1; i >= 0; i--) {
                     let e = this.enemies[i];
-                    e.y += actualSpeed * dt;
-                    if (this.rectIntersect(this.player.x, this.player.y, this.player.w, this.player.h, e.x, e.y, e.w, e.h)) {
+                    e.y += speed * dt;
+                    
+                    // Collision
+                    if (this.checkCollision(this.player, e)) {
                         this.gameOver();
                         return;
                     }
+                    // Cleanup
                     if (e.y > canvas.height) {
                         this.enemies.splice(i, 1);
-                        let pts = 10 * this.currentDifficulty.scoreMod;
-                        this.score += pts;
+                        this.score += 10 * this.currentDifficulty.scoreMod;
                     }
                 }
+            },
 
-                // 6. Update Coins
+            updateCoins: function(dt, speed) {
                 for (let i = this.coins.length - 1; i >= 0; i--) {
                     let c = this.coins[i];
-                    c.y += actualSpeed * dt;
-                    if (this.rectIntersect(this.player.x, this.player.y, this.player.w, this.player.h, c.x, c.y, c.w, c.h)) {
-                        // Logic: If Red Orb active, +2 coins, else +1
-                        let earned = this.isCoinMult ? 2 : 1;
-                        this.sessionCoins += earned;
+                    c.y += speed * dt;
 
-                        // Floating Text
-                        this.texts.push({
-                            x: c.x + c.w/2, y: c.y,
-                            text: `+${earned}`,
-                            color: earned === 2 ? '#e74c3c' : '#ffd700',
-                            life: 1.0, vy: -100
+                    if (this.checkCollision(this.player, c)) {
+                        let val = this.isCoinMult ? 2 : 1;
+                        this.sessionCoins += val;
+                        this.floatingTexts.push({
+                            x: c.x, y: c.y, text: `+${val}`,
+                            color: val === 2 ? '#e74c3c' : '#ffd700',
+                            life: 1.0, vy: -80
                         });
-
                         this.coins.splice(i, 1);
                     } else if (c.y > canvas.height) {
                         this.coins.splice(i, 1);
                     }
                 }
-
-                // 7. Powerups (0=Slow, 1=CoinMult)
-                if (Math.random() < 0.005) {
-                    let type = Math.random() > 0.5 ? 0 : 1;
-                    this.powerUps.push({ x: Math.random() * (canvas.width - 25), y: -25, w: 25, h: 25, type: type });
-                }
-                for (let i = this.powerUps.length - 1; i >= 0; i--) {
-                    let p = this.powerUps[i];
-                    p.y += actualSpeed * dt;
-                    if (this.rectIntersect(this.player.x, this.player.y, this.player.w, this.player.h, p.x, p.y, p.w, p.h)) {
-                        if (p.type === 0) { this.isSlowed = true; this.timerSlow = CONFIG.powerUpDuration; }
-                        else { this.isCoinMult = true; this.timerMult = CONFIG.powerUpDuration; }
-                        this.powerUps.splice(i, 1);
-                    } else if (p.y > canvas.height) { this.powerUps.splice(i, 1); }
-                }
-
-                // 8. Floating Texts
-                for (let i = this.texts.length - 1; i >= 0; i--) {
-                    let t = this.texts[i];
-                    t.y += t.vy * dt;
-                    t.life -= dt * 1.5; // Fade out speed
-                    if (t.life <= 0) this.texts.splice(i, 1);
-                }
-
-                this.updateUI();
             },
 
-            updateUI: function() {
-                document.getElementById('score-display').innerText = `Score: ${Math.floor(this.score)}`;
-                document.getElementById('coin-display-hud').innerText = saveData.coins + this.sessionCoins;
+            updatePowerUps: function(dt, speed) {
+                for (let i = this.powerUps.length - 1; i >= 0; i--) {
+                    let p = this.powerUps[i];
+                    p.y += speed * dt;
 
-                document.getElementById('badge-slow').style.display = this.isSlowed ? 'block' : 'none';
-                document.getElementById('badge-mult').style.display = this.isCoinMult ? 'block' : 'none';
+                    if (this.checkCollision(this.player, p)) {
+                        if (p.type === 0) { // Slow
+                            this.isSlowed = true; this.timerSlow = CONFIG.powerUpDuration;
+                        } else { // Mult
+                            this.isCoinMult = true; this.timerMult = CONFIG.powerUpDuration;
+                        }
+                        this.powerUps.splice(i, 1);
+                    } else if (p.y > canvas.height) {
+                        this.powerUps.splice(i, 1);
+                    }
+                }
+            },
+
+            updateFloatingTexts: function(dt) {
+                for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+                    let t = this.floatingTexts[i];
+                    t.y += t.vy * dt;
+                    t.life -= dt * 1.5;
+                    if (t.life <= 0) this.floatingTexts.splice(i, 1);
+                }
             },
 
             draw: function() {
+                // Clear Screen
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                // Draw Player
-                ctx.shadowBlur = 15; ctx.shadowColor = this.player.color;
+                // Pause Overlay
+                if (this.paused && this.state === 'PLAYING') {
+                    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                    ctx.fillRect(0,0,canvas.width, canvas.height);
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 40px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText("PAUSED", canvas.width/2, canvas.height/2);
+                    return;
+                }
+
+                if (this.state !== 'PLAYING' && this.state !== 'GAMEOVER') return;
+
+                // --- DRAW PLAYER ---
+                ctx.save(); // Isolate Player styles
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = this.player.color;
                 ctx.fillStyle = this.player.color;
                 ctx.fillRect(this.player.x, this.player.y, this.player.w, this.player.h);
-                ctx.fillStyle = '#ffffff'; ctx.shadowBlur = 0;
+                // Inner core
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#fff';
                 ctx.fillRect(this.player.x + 4, this.player.y + 4, this.player.w - 8, this.player.h - 8);
+                ctx.restore(); // Restore context
 
-                // Draw Enemies
+                // --- DRAW ENEMIES ---
+                ctx.save();
                 ctx.fillStyle = '#e94560';
                 for(let e of this.enemies) ctx.fillRect(e.x, e.y, e.w, e.h);
+                ctx.restore();
 
-                // Draw Coins
-                ctx.fillStyle = '#ffd700'; ctx.shadowBlur=10; ctx.shadowColor='#ffd700';
+                // --- DRAW COINS ---
                 for(let c of this.coins) {
+                    ctx.save();
+                    ctx.fillStyle = '#ffd700';
+                    ctx.shadowBlur = 10; ctx.shadowColor = '#ffd700';
                     ctx.beginPath();
                     ctx.arc(c.x + c.w/2, c.y + c.h/2, c.w/2, 0, Math.PI*2);
                     ctx.fill();
+                    // Shine
                     ctx.fillStyle = '#ffea00';
                     ctx.beginPath();
                     ctx.arc(c.x + c.w/2, c.y + c.h/2, c.w/4, 0, Math.PI*2);
                     ctx.fill();
-                    ctx.fillStyle = '#ffd700';
+                    ctx.restore();
                 }
-                ctx.shadowBlur = 0;
 
-                // Draw Powerups
+                // --- DRAW POWERUPS ---
                 for(let p of this.powerUps) {
-                    if(p.type === 0) { // SLOW
-                        ctx.fillStyle = '#00ffcc'; ctx.shadowBlur=10; ctx.shadowColor='#00ffcc';
-                        ctx.beginPath(); ctx.arc(p.x+p.w/2, p.y+p.h/2, p.w/2, 0, Math.PI*2); ctx.fill();
-                    } else { // COIN MULT
-                        ctx.fillStyle = '#e74c3c'; ctx.shadowBlur=10; ctx.shadowColor='#e74c3c';
-                        ctx.save(); ctx.translate(p.x+p.w/2, p.y+p.h/2); ctx.rotate(Math.PI/4);
-                        ctx.fillRect(-p.w/2, -p.w/2, p.w, p.w); ctx.restore();
+                    ctx.save();
+                    if (p.type === 0) { // Slow (Blue Circle)
+                        ctx.fillStyle = '#00ffcc';
+                        ctx.shadowBlur = 15; ctx.shadowColor = '#00ffcc';
+                        ctx.beginPath();
+                        ctx.arc(p.x + p.w/2, p.y + p.h/2, p.w/2, 0, Math.PI*2);
+                        ctx.fill();
+                    } else { // Mult (Red Diamond)
+                        ctx.fillStyle = '#e74c3c';
+                        ctx.shadowBlur = 15; ctx.shadowColor = '#e74c3c';
+                        ctx.translate(p.x + p.w/2, p.y + p.h/2);
+                        ctx.rotate(Math.PI/4);
+                        ctx.fillRect(-p.w/2, -p.w/2, p.w, p.w);
                     }
-                    ctx.shadowBlur=0;
+                    ctx.restore();
                 }
 
-                // Draw Floating Text
-                for(let t of this.texts) {
+                // --- DRAW FLOATING TEXT ---
+                for(let t of this.floatingTexts) {
+                    ctx.save();
                     ctx.fillStyle = t.color;
                     ctx.globalAlpha = t.life;
-                    ctx.font = 'bold 16px Arial';
+                    ctx.font = 'bold 20px sans-serif';
                     ctx.fillText(t.text, t.x, t.y);
-                    ctx.globalAlpha = 1.0;
+                    ctx.restore();
                 }
 
-                if(this.isSlowed) { ctx.fillStyle='rgba(0,255,204,0.1)'; ctx.fillRect(0,0,canvas.width,canvas.height); }
-                if(this.isCoinMult) { ctx.fillStyle='rgba(231, 76, 60,0.05)'; ctx.fillRect(0,0,canvas.width,canvas.height); }
+                // --- GLOBAL EFFECTS ---
+                if (this.isSlowed) {
+                    ctx.fillStyle = 'rgba(0, 255, 204, 0.1)';
+                    ctx.fillRect(0,0, canvas.width, canvas.height);
+                }
+                if (this.isCoinMult) {
+                    ctx.fillStyle = 'rgba(231, 76, 60, 0.1)';
+                    ctx.fillRect(0,0, canvas.width, canvas.height);
+                }
+            },
+
+            checkCollision: function(rect1, rect2) {
+                return (rect1.x < rect2.x + rect2.w &&
+                        rect1.x + rect1.w > rect2.x &&
+                        rect1.y < rect2.y + rect2.h &&
+                        rect1.y + rect1.h > rect2.y);
             },
 
             loop: function(timestamp) {
                 let dt = (timestamp - this.lastTime) / 1000;
+                if (dt > 0.1) dt = 0.1; // Cap delta time
                 this.lastTime = timestamp;
-                if (dt > 0.1) dt = 0.1;
+
                 this.update(dt);
                 this.draw();
                 requestAnimationFrame(t => this.loop(t));
-            },
-
-            rectIntersect: function(x1, y1, w1, h1, x2, y2, w2, h2) {
-                return x2 < x1 + w1 && x2 + w2 > x1 && y2 < y1 + h1 && y2 + h2 > y1;
             }
         };
 
-        // --- UI LOGIC ---
+        /**
+         * 3. UI CONTROLLER
+         */
         const ui = {
             screens: {
                 start: document.getElementById('start-screen'),
                 shop: document.getElementById('shop-screen'),
                 gameover: document.getElementById('game-over-screen'),
                 hud: document.getElementById('ui-hud'),
-                menu: document.getElementById('ui-menu')
+                layer: document.getElementById('ui-layer')
             },
 
-            init: function() {
-                this.renderShop();
-            },
-
-            updateMoney: function() {
-                const total = saveData.coins;
-                document.getElementById('coin-display-menu').innerText = total;
-                document.getElementById('coin-display-shop').innerText = total;
-            },
-
-            updateState: function() {
-                const state = game.state;
-                this.screens.menu.classList.add('hidden');
-                this.screens.hud.classList.add('hidden');
-
-                Object.values(this.screens).forEach(s => {
-                    if(s !== this.screens.menu && s !== this.screens.hud) s.classList.add('hidden');
+            showScreen: function(screenName) {
+                // Hide all specific screens first
+                Object.values(this.screens).forEach(el => {
+                    if(el !== this.screens.hud) el.classList.add('hidden');
                 });
+                
+                this.screens.hud.classList.add('hidden');
+                this.screens.layer.classList.remove('hidden');
 
-                if (state === 'START') {
-                    this.screens.menu.classList.remove('hidden');
+                if (screenName === 'start') {
                     this.screens.start.classList.remove('hidden');
                     this.updateMoney();
-                } else if (state === 'PLAYING') {
-                    this.screens.menu.classList.add('hidden');
-                    this.screens.hud.classList.remove('hidden');
-                } else if (state === 'GAMEOVER') {
-                    this.screens.menu.classList.remove('hidden');
+                } else if (screenName === 'shop') {
+                    this.screens.shop.classList.remove('hidden');
+                    this.renderShop();
+                } else if (screenName === 'gameover') {
                     this.screens.gameover.classList.remove('hidden');
+                } else if (screenName === 'hud') {
+                    this.screens.layer.classList.add('hidden');
+                    this.screens.hud.classList.remove('hidden');
                 }
             },
 
-            openShop: function() {
-                this.screens.start.classList.add('hidden');
-                this.screens.shop.classList.remove('hidden');
-                this.renderShop();
+            updateHUD: function(score, coins, slow, mult) {
+                document.getElementById('score-display').innerText = `Score: ${Math.floor(score)}`;
+                document.getElementById('coin-display-hud').innerText = coins;
+                document.getElementById('badge-slow').style.display = slow ? 'block' : 'none';
+                document.getElementById('badge-mult').style.display = mult ? 'block' : 'none';
             },
 
-            openMenu: function() {
-                this.screens.shop.classList.add('hidden');
-                this.screens.start.classList.remove('hidden');
+            updateMoney: function() {
+                document.getElementById('coin-display-shop').innerText = saveData.coins;
+            },
+
+            updateHighScore: function() {
+                const hs = Math.floor(saveData.highScore);
+                document.getElementById('highscore-menu').innerText = hs;
+                document.getElementById('highscore-gameover').innerText = hs;
             },
 
             renderShop: function() {
                 const grid = document.getElementById('shop-grid');
                 grid.innerHTML = '';
-
-                COLORS.forEach(color => {
-                    const isUnlocked = saveData.unlockedColors.includes(color.id);
-                    const isSelected = saveData.selectedColor === color.id;
-
+                COLORS.forEach(c => {
+                    const isUnlocked = saveData.unlockedColors.includes(c.id);
+                    const isSelected = saveData.selectedColor === c.id;
                     const item = document.createElement('div');
                     item.className = `shop-item ${isSelected ? 'selected' : ''} ${!isUnlocked ? 'locked' : ''}`;
-
-                    let html = `
-                        <div class="color-preview" style="background-color: ${color.hex}; color: ${color.hex}"></div>
-                        <div style="font-weight:bold; margin-bottom:5px">${color.name}</div>
-                    `;
-
-                    if (isSelected) {
-                        html += `<div class="owned-tag">OWNED & EQUIPPED</div>`;
-                    } else if (isUnlocked) {
-                        html += `<div class="owned-tag">OWNED</div>`;
-                    } else {
-                        html += `<div class="price-tag">${color.price} Coins</div>`;
-                    }
+                    
+                    let html = `<div class="color-preview" style="background-color:${c.hex}"></div>
+                                <div style="font-weight:bold">${c.name}</div>`;
+                    
+                    if (isSelected) html += `<div class="owned-tag">EQUIPPED</div>`;
+                    else if (isUnlocked) html += `<div class="owned-tag">OWNED</div>`;
+                    else html += `<div class="price-tag">${c.price} Coins</div>`;
 
                     item.innerHTML = html;
-
                     item.onclick = () => {
                         if (isUnlocked) {
-                            saveData.selectedColor = color.id;
-                            game.player.color = color.hex;
+                            saveData.selectedColor = c.id;
+                            game.player.color = c.hex;
                             localStorage.setItem('endlessRunnerSave', JSON.stringify(saveData));
                             this.renderShop();
+                        } else if (saveData.coins >= c.price) {
+                            saveData.coins -= c.price;
+                            saveData.unlockedColors.push(c.id);
+                            saveData.selectedColor = c.id;
+                            game.player.color = c.hex;
+                            localStorage.setItem('endlessRunnerSave', JSON.stringify(saveData));
+                            this.updateMoney();
+                            this.renderShop();
                         } else {
-                            if (saveData.coins >= color.price) {
-                                saveData.coins -= color.price;
-                                saveData.unlockedColors.push(color.id);
-                                saveData.selectedColor = color.id;
-                                game.player.color = color.hex;
-                                localStorage.setItem('endlessRunnerSave', JSON.stringify(saveData));
-                                this.updateMoney();
-                                this.renderShop();
-                            } else {
-                                item.style.backgroundColor = 'rgba(255,0,0,0.2)';
-                                setTimeout(() => item.style.backgroundColor = '', 200);
-                            }
+                            item.style.transform = 'translateX(5px)';
+                            setTimeout(() => item.style.transform = '', 100);
                         }
                     };
-
                     grid.appendChild(item);
                 });
             }
         };
 
+        // --- STARTUP ---
+        window.addEventListener('resize', () => game.resize());
+        
+        // Initialize Game
         game.init();
-        ui.init();
+        // Ensure initial resize is correct
+        setTimeout(() => game.resize(), 100);
 
     </script>
 </body>
